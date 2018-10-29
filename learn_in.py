@@ -2,6 +2,8 @@
 
 from microbit import *
 
+uart.init(baudrate=115200)
+
 DPINS = (pin8,pin12,pin13,pin14,pin15,pin16)
 PINS = (pin1,pin8,pin12,pin2,pin13,pin14,pin15,pin16)
 SCAN = None
@@ -17,7 +19,7 @@ def init():
 def learn():
     s = [-1 for i in range(8)]
     for i in range(8):
-        display.show(i+1)
+        display.show(i)
         while True:
             m = scan(False)
             if m != 0:
@@ -46,12 +48,17 @@ def scan(multi=True):
     return r
 
 def play():
+    p = 0
+    tone = lambda : scan(False)
     while True:
-        m = scan(False)
+        m = tone()
         if m != 0:
             display.show(str(MASKS.index(m)))
         else:
-            display.show('?')
+            display.show('-')
+        if m != p:
+            uart.write(str(m) + "\n")
+            p = m
 
 init()
 del init
