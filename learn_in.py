@@ -4,7 +4,7 @@ from microbit import *
 
 DPINS = (pin8,pin12,pin13,pin14,pin15,pin16)
 PINS = (pin1,pin8,pin12,pin2,pin13,pin14,pin15,pin16)
-MAPPING = None
+SCAN = None
 MASKS = (1,2,4,8,16,32,64,128)
 
 def init():
@@ -15,47 +15,52 @@ def init():
             p.is_touched()
 
 def learn():
-    mapping = []
+    s = [-1 for i in range(8)]
     for i in range(8):
         display.show(i+1)
         while True:
-            t = scan(False)
-            if t != 0 and t not in mapping:
-                mapping.append(t)
-                break
-    return mapping
+            m = scan(False)
+            if m != 0:
+                if m in MASKS:
+                    b = MASKS.index(m)
+                    if not (b in s):
+                        s[i] = b
+                        break
+    return s
 
 def scan(multi=True):
     r = 0
-    for i in range(8):
-        p = PINS[i]
+    for i in range(7,-1,-1):
+        if SCAN is None:
+            pi = i
+        else:
+            pi = SCAN[i]
+        p = PINS[pi]
         if p in DPINS:
             v = p.read_digital() == 0
         else:
             v = p.is_touched()
         if v:
-            m = MASKS[i]
-            if MAPPING is None:
-                r += m
-            else:
-                r += MASKS[MAPPING.index(m)]
+            r += MASKS[i]
             if not multi: break 
     return r
 
 def play():
     while True:
-        t = scan(False)
-        if t != 0:
-            display.show(str(MASKS.index(t)))
+        m = scan(False)
+        if m != 0:
+            display.show(str(MASKS.index(m)))
         else:
             display.show('?')
 
 init()
 del init
-MAPPING = learn()
+SCAN = learn()
 del learn
 display.show(Image.HAPPY)
 
-sleep(500)
+print(SCAN)
+
+sleep(250)
 play()
 
