@@ -20,7 +20,7 @@ def learn():
         display.show(i+1)
         while True:
             t = scan(False)
-            if t != 0:
+            if t != 0 and t not in mapping:
                 mapping.append(t)
                 break
     return mapping
@@ -34,10 +34,11 @@ def scan(multi=True):
         else:
             v = p.is_touched()
         if v:
-            if MAPPING is not None:
-                r += MAPPING[i]
+            m = MASKS[i]
+            if MAPPING is None:
+                r += m
             else:
-                r += MASKS[i]
+                r += MASKS[MAPPING.index(m)]
             if not multi: break 
     return r
 
@@ -45,16 +46,16 @@ def play():
     while True:
         t = scan(False)
         if t != 0:
-            display.show(str(MAPPING.find(t)))
+            display.show(str(MASKS.index(t)))
         else:
             display.show('?')
 
 init()
 del init
-#MAPPING = learn()
-#del learn
+MAPPING = learn()
+del learn
 display.show(Image.HAPPY)
 
-##sleep(500)
-##play()
+sleep(500)
+play()
 
