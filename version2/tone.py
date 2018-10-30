@@ -44,28 +44,27 @@ def scan(multi=True):
     return r
 
 def play():
-    p = 0
+    ptm = 0
     tone = lambda : scan(False)
     while True:
-        m = tone()
-        if m != 0:
-            display.show(str(MASKS.index(m)))
+        tm = tone()
+        if tm != 0:
+            display.show(str(MASKS.index(tm)))
         else:
             display.show('-')
-        if m != p:
-            uart.write(bytes([m]))
-            display.show(Image.DIAMOND)
-            p = m
-            sleep(250)
+        if tm != ptm:
+            uart.write(bytes([tm]))
+            ptm = tm
 
 try:
     print("TONE")
     init()
     del init
-    SCAN = learn()
-    del learn
+    if button_a.is_pressed():
+        SCAN = learn()
+        del learn
+        print(SCAN)
     display.show(Image.HAPPY)
-    print(SCAN)
     sleep(250)
     uart.init(baudrate=115200, tx=pin0)
     play()
@@ -73,6 +72,6 @@ except Exception as e:
     display.show(Image.NO)
     uart.init(baudrate=115200)
     print(e)
-    sleep(500)
+    sleep(1000)
 finally:
     reset()

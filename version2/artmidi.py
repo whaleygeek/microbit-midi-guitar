@@ -45,14 +45,13 @@ def scan(multi=True):
             if not multi: break 
     return r
 
-rdart = lambda: scan(False)
+rdart = lambda: scan(True)
 
 def rdtone():
     tm = None
     if uart.any():
-        b = uart.read(1) # don't want a timeout
+        b = uart.read(1)
         if b is not None:
-            display.show(Image.DIAMOND)
             tm = b[0]
     return tm
 
@@ -65,12 +64,15 @@ def play():
 
         am = rdart()
         if am != 0:
-            display.show(str(MASKS.index(am)))
+            try:
+                display.show(str(MASKS.index(am)))
+            except: # probably multi
+                display.show(Image.DIAMOND)
         else:
             display.show('-')
 
         if am != pam or tm != ptm:
-            print("%02X %02X\n" % (tm, am))
+            print("%02X%02X" % (tm, am))
             pam = am
             ptm = tm
 
@@ -78,10 +80,11 @@ try:
     print("ART/MIDI")
     init()
     del init
-    SCAN = learn()
-    del learn
+    if button_a.is_pressed():
+        SCAN = learn()
+        del learn
+        print(SCAN)
     display.show(Image.HAPPY)
-    print(SCAN)
     sleep(250)
     
     uart.init(baudrate=115200, rx=pin0)
@@ -90,7 +93,6 @@ except Exception as e:
     display.show(Image.NO)
     uart.init(baudrate=115200)
     print(e)
-    sleep(500)
+    sleep(1000)
 finally:
     reset()
-    
