@@ -1,8 +1,5 @@
-# learn up to 8 touch input positions
-
 from microbit import *
-
-uart.init(baudrate=115200)
+from micropython import kbd_intr
 
 DPINS = (pin8,pin12,pin13,pin14,pin15,pin16)
 PINS = (pin1,pin8,pin12,pin2,pin13,pin14,pin15,pin16)
@@ -10,6 +7,7 @@ SCAN = None
 MASKS = (1,2,4,8,16,32,64,128)
 
 def init():
+    kbd_intr(-1)
     for p in PINS:
         if p in DPINS:
             p.set_pull(pin0.NO_PULL)
@@ -57,17 +55,25 @@ def play():
         else:
             display.show('-')
         if m != p:
-            uart.write(str(m) + "\n")
+            uart.write(bytes([m]))
             p = m
 
-init()
-del init
-SCAN = learn()
-del learn
-display.show(Image.HAPPY)
-
-print(SCAN)
-
-sleep(250)
-play()
-
+try:
+    init()
+    del init
+    SCAN = learn()
+    del learn
+    display.show(Image.HAPPY)
+    print(SCAN)
+    sleep(250)
+    
+    uart.init(baudrate=115200, tx=pin0)
+    play()
+except Exception as e:
+    display.show(Image.NO)
+    uart.init(baudrate=115200)
+    print(e)
+    sleep(500)
+finally:
+    reset()
+    
