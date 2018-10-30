@@ -45,20 +45,37 @@ def scan(multi=True):
             if not multi: break 
     return r
 
+rdart = lambda: scan(False)
+
+def rdtone():
+    tm = None
+    if uart.any():
+        b = uart.read(1) # don't want a timeout
+        if b is not None:
+            display.show(Image.DIAMOND)
+            tm = b[0]
+    return tm
+
 def play():
-    p = 0
-    tone = lambda : scan(False)
+    pam = 0
+    ptm = 0
     while True:
-        m = tone()
-        if m != 0:
-            display.show(str(MASKS.index(m)))
+        tm = rdtone()
+        if tm is None: tm = ptm
+
+        am = rdart()
+        if am != 0:
+            display.show(str(MASKS.index(am)))
         else:
             display.show('-')
-        if m != p:
-            uart.write(bytes([m]))
-            p = m
+
+        if am != pam or tm != ptm:
+            print("%02X %02X\n" % (tm, am))
+            pam = am
+            ptm = tm
 
 try:
+    print("ART/MIDI")
     init()
     del init
     SCAN = learn()
@@ -67,7 +84,7 @@ try:
     print(SCAN)
     sleep(250)
     
-    uart.init(baudrate=115200, tx=pin0)
+    uart.init(baudrate=115200, rx=pin0)
     play()
 except Exception as e:
     display.show(Image.NO)

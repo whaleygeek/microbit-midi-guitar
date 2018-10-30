@@ -1,5 +1,4 @@
 from microbit import *
-from micropython import kbd_intr
 
 DPINS = (pin8,pin12,pin13,pin14,pin15,pin16)
 PINS = (pin1,pin8,pin12,pin2,pin13,pin14,pin15,pin16)
@@ -7,7 +6,6 @@ SCAN = None
 MASKS = (1,2,4,8,16,32,64,128)
 
 def init():
-    kbd_intr(-1)
     for p in PINS:
         if p in DPINS:
             p.set_pull(pin0.NO_PULL)
@@ -56,9 +54,12 @@ def play():
             display.show('-')
         if m != p:
             uart.write(bytes([m]))
+            display.show(Image.DIAMOND)
             p = m
+            sleep(250)
 
 try:
+    print("TONE")
     init()
     del init
     SCAN = learn()
@@ -66,7 +67,6 @@ try:
     display.show(Image.HAPPY)
     print(SCAN)
     sleep(250)
-    
     uart.init(baudrate=115200, tx=pin0)
     play()
 except Exception as e:
@@ -76,4 +76,3 @@ except Exception as e:
     sleep(500)
 finally:
     reset()
-    
