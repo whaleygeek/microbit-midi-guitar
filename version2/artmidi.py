@@ -111,13 +111,16 @@ def send(tm, am):
 
     if pluck and not plucked: # just plucked
         if playing is not None:
-            print("OFF:%d" % playing)
-        print("ON:%d" % note)
+            ##print("OFF:%d" % playing)
+            midi.note_off(playing)
+        ##print("ON:%d" % note)
+        midi.note_on(note)
         playing = note
 
     if playing is not None:
         if note is None or note != playing:
-            print("OFF:%d" % playing)
+            ##print("OFF:%d" % playing)
+            midi.note_off(playing)
             playing = None
 
     plucked = pluck
