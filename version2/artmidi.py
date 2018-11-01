@@ -55,13 +55,9 @@ def rdtone():
             tm = b[0]
     return tm
 
-
 class MIDI():
     NOTE_ON = 0x90
     NOTE_OFF = 0x80
-    #CHAN_MSG = 0xB0
-    #CHAN_BANK = 0x00
-    #CHAN_VOLUME = 0x07
     CHAN_PROGRAM = 0xC0
 
     @staticmethod
@@ -93,14 +89,40 @@ class MIDI():
         if velocity < 0 or velocity > 0x7F: velocity = 0x7F
         self.send(self.NOTE_OFF | self.channel, note, velocity)
 
+def refinger(i=None):
+    global fingering, NOTES
+    if i is None:
+        fingering = (fingering+1) % len(FINGERINGS)
+    else:
+        fingering = i
+    NOTES = [n+ROOT+TUNINGS[tuning] for n in FINGERINGS[fingering]]
+
+def retune(i=None):
+    global tuning, NOTES
+    if i is None:
+        tuning = (tuning+1) % len(TUNINGS)
+    else:
+        tuning = i
+    NOTES = [n+ROOT+TUNINGS[tuning] for n in FINGERINGS[fingering]]
+
 midi = MIDI()
-O=5
-#(C) D E F G A B C D
-SCALE = [0,2,4,5,7,9,11,12,14]
-NOTES = [n+(O*12) for n in SCALE]
+
 playing = None
 plucked = False
 PLUCK = 1<<5
+ROOT = 4  # C C# D D# {E} F F# G G# A A# B
+tuning=0
+TUNINGS = [5*12,4*12,3*12]
+fingering = 0
+FINGERINGS = [
+    [0,1,2,3,4,5,6,7,8], #semi
+    [0,2,4,5,7,9,11,12,14], #major
+    [1,3,6,8,10, 13,15,18,20] #pentatonic
+]
+
+refinger(0)
+retune(tuning)
+
 
 def send(tm, am):
     global playing, plucked
@@ -119,7 +141,6 @@ def send(tm, am):
 
     if playing is not None:
         if note is None or note != playing:
-            ##print("OFF:%d" % playing)
             midi.note_off(playing)
             playing = None
 
@@ -129,6 +150,11 @@ def play():
     pam = 0
     ptm = 0
     while True:
+        if button_a.was_pressed():
+            retune()
+        elif button_b.was_pressed():
+            refinger()
+
         tm = rdtone()
         if tm is None: tm = ptm
 
