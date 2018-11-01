@@ -109,22 +109,16 @@ def send(tm, am):
     if tm == 0: note = NOTES[0]
     else: note = NOTES[1+MASKS.index(tm)] #tm=single
 
-    if pluck:
-        if not plucked:
-            if playing is not None:
-                print("OFF:%d" % playing)
-                playing = None
-            print("ON:%d" % note)
-            playing = note
+    if pluck and not plucked: # just plucked
+        if playing is not None:
+            print("OFF:%d" % playing)
+        print("ON:%d" % note)
+        playing = note
 
-        else: # plucked
-            if note != playing:
-                print("OFF:%d" % playing)
-                print("ON:%d" % note)
-                playing = note
-
-    else: #not pluck
-        pass # leave note sustained
+    if playing is not None:
+        if note is None or note != playing:
+            print("OFF:%d" % playing)
+            playing = None
 
     plucked = pluck
 
