@@ -55,6 +55,79 @@ def rdtone():
             tm = b[0]
     return tm
 
+
+class MIDI():
+    NOTE_ON = 0x90
+    NOTE_OFF = 0x80
+    #CHAN_MSG = 0xB0
+    #CHAN_BANK = 0x00
+    #CHAN_VOLUME = 0x07
+    CHAN_PROGRAM = 0xC0
+
+    @staticmethod
+    def send(b0, b1, b2=None):
+        if b2 is None:
+            m = bytes([b0, b1])
+        else:
+            m = bytes([b0, b1, b2])
+        uart.write(m)
+
+    def __init__(self, channel=0, velocity=0x7F):
+        self.channel = channel
+        self.velocity = velocity
+
+    def set_instrument(self, instrument):
+        instrument -= 1
+        if instrument < 0 or instrument > 0x7F: return
+        self.send(self.CHAN_PROGRAM | self.channel, instrument)
+
+    def note_on(self, note, velocity=None):
+        if note < 0 or note > 0x7F: return
+        if velocity is None: velocity = self.velocity
+        if velocity < 0 or velocity > 0x7F: velocity = 0x7F
+        self.send(self.NOTE_ON | self.channel, note, velocity)
+
+    def note_off(self, note, velocity=0x7F):
+        if note < 0 or note > 0x7F: return
+        if velocity is None: velocity = self.velocity
+        if velocity < 0 or velocity > 0x7F: velocity = 0x7F
+        self.send(self.NOTE_OFF | self.channel, note, velocity)
+
+midi = MIDI()
+O=5
+#(C) D E F G A B C D
+SCALE = [0,2,4,5,7,9,11,12,14]
+NOTES = [n+(O*12) for n in SCALE]
+playing = None
+plucked = False
+PLUCK = 1<<5
+
+def send(tm, am):
+    global playing, plucked
+
+    pluck = (am & PLUCK) != 0
+    if tm == 0: note = NOTES[0]
+    else: note = NOTES[1+MASKS.index(tm)] #tm=single
+
+    if pluck:
+        if not plucked:
+            if playing is not None:
+                print("OFF:%d" % playing)
+                playing = None
+            print("ON:%d" % note)
+            playing = note
+
+        else: # plucked
+            if note != playing:
+                print("OFF:%d" % playing)
+                print("ON:%d" % note)
+                playing = note
+
+    else: #not pluck
+        pass # leave note sustained
+
+    plucked = pluck
+
 def play():
     pam = 0
     ptm = 0
@@ -72,7 +145,7 @@ def play():
             display.show('-')
 
         if am != pam or tm != ptm:
-            print("%02X%02X" % (tm, am))
+            send(tm, am)
             pam = am
             ptm = tm
 
