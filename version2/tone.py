@@ -49,7 +49,7 @@ def play():
     while True:
         tm = tone()
         if tm != 0:
-            display.show(str(MASKS.index(tm)))
+            display.show(str(1+MASKS.index(tm)))
         else:
             display.show('-')
         if tm != ptm:

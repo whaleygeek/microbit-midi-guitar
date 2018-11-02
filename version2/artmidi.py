@@ -1,6 +1,23 @@
 from microbit import *
 from micropython import kbd_intr
 
+octave=0
+OCTAVES = [3*12,4*12,5*12]
+
+rootidx = 0
+ROOTT = "EADGB"
+ROOTS = [4,9,2,7,11]
+#   C C# D D# E F F# G G# A A# B
+#   0 1  2 3  4 5 6  7 8  9 10 11
+
+fingering = 0
+FINGERT = "SMP"
+FINGERINGS = [
+    [0,1,2,3,4,5,6,7,8], #sem
+    [0,2,4,5,7,9,11,12,14], #maj
+    [1,3,6,8,10, 13,15,18,20] #pent
+]
+
 DPINS = (pin8,pin12,pin13,pin14,pin15,pin16)
 PINS = (pin1,pin8,pin12,pin2,pin13,pin14,pin15,pin16)
 SCAN = None
@@ -14,28 +31,10 @@ def init():
         else:
             p.is_touched()
 
-def learn():
-    s = [-1 for i in range(8)]
-    for i in range(8):
-        display.show(i)
-        while True:
-            m = scan(False)
-            if m != 0:
-                if m in MASKS:
-                    b = MASKS.index(m)
-                    if not (b in s):
-                        s[i] = b
-                        break
-    return s
-
 def scan(multi=True):
     r = 0
     for i in range(7,-1,-1):
-        if SCAN is None:
-            pi = i
-        else:
-            pi = SCAN[i]
-        p = PINS[pi]
+        p = PINS[i]
         if p in DPINS:
             v = p.read_digital() == 0
         else:
@@ -89,40 +88,44 @@ class MIDI():
         if velocity < 0 or velocity > 0x7F: velocity = 0x7F
         self.send(self.NOTE_OFF | self.channel, note, velocity)
 
+def newnotes():
+    global NOTES
+    NOTES = [n+ROOTS[rootidx]+OCTAVES[octave] for n in FINGERINGS[fingering]]
+
+def reroot(i=None):
+    global rootidx, NOTES
+    if i is None:
+        rootidx = (rootidx+1) % len(ROOTS)
+    else:
+        rootidx = i
+    newnotes()
+
 def refinger(i=None):
-    global fingering, NOTES
+    global fingering
     if i is None:
         fingering = (fingering+1) % len(FINGERINGS)
     else:
         fingering = i
-    NOTES = [n+ROOT+TUNINGS[tuning] for n in FINGERINGS[fingering]]
+    newnotes()
 
-def retune(i=None):
-    global tuning, NOTES
+def reoctave(i=None):
+    global octave
     if i is None:
-        tuning = (tuning+1) % len(TUNINGS)
+        octave = (octave+1) % len(OCTAVES)
     else:
-        tuning = i
-    NOTES = [n+ROOT+TUNINGS[tuning] for n in FINGERINGS[fingering]]
+        octave = i
+    newnotes()
 
 midi = MIDI()
 
 playing = None
 plucked = False
 PLUCK = 1<<5
-ROOT = 4  # C C# D D# {E} F F# G G# A A# B
-tuning=0
-TUNINGS = [5*12,4*12,3*12]
-fingering = 0
-FINGERINGS = [
-    [0,1,2,3,4,5,6,7,8], #semi
-    [0,2,4,5,7,9,11,12,14], #major
-    [1,3,6,8,10, 13,15,18,20] #pentatonic
-]
+LOW=1<<4
+MID=1<<3
+HIGH=1<<2
 
-refinger(0)
-retune(tuning)
-
+newnotes()
 
 def send(tm, am):
     global playing, plucked
@@ -133,9 +136,7 @@ def send(tm, am):
 
     if pluck and not plucked: # just plucked
         if playing is not None:
-            ##print("OFF:%d" % playing)
             midi.note_off(playing)
-        ##print("ON:%d" % note)
         midi.note_on(note)
         playing = note
 
@@ -149,23 +150,28 @@ def send(tm, am):
 def play():
     pam = 0
     ptm = 0
+    display.show(ROOTT[rootidx])
     while True:
         if button_a.was_pressed():
-            retune()
-        elif button_b.was_pressed():
+            reroot()
+            display.show(ROOTT[rootidx])
+
+        if button_b.was_pressed():
             refinger()
+            display.show(FINGERT[fingering])
+            sleep(500)
+            display.show(ROOTT[rootidx])
 
         tm = rdtone()
         if tm is None: tm = ptm
-
         am = rdart()
-        if am != 0:
-            try:
-                display.show(str(MASKS.index(am)))
-            except: # probably multi
-                display.show(Image.DIAMOND)
-        else:
-            display.show('-')
+
+        if (am & LOW) != 0:
+            reoctave(0)
+        elif (am & MID) != 0:
+            reoctave(1)
+        elif (am & HIGH) != 0:
+            reoctave(2)
 
         if am != pam or tm != ptm:
             send(tm, am)
@@ -176,10 +182,6 @@ try:
     print("ART/MIDI")
     init()
     del init
-    if button_a.is_pressed():
-        SCAN = learn()
-        del learn
-        print(SCAN)
     display.show(Image.HAPPY)
     sleep(250)
     
