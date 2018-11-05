@@ -10,13 +10,6 @@ ROOTS = [4,9,2,7,11]
 #   C C# D D# E F F# G G# A A# B
 #   0 1  2 3  4 5 6  7 8  9 10 11
 
-fingering = 0
-FINGERT = "SMP"
-FINGERINGS = [
-    [0,1,2,3,4,5,6,7,8], #sem
-    [0,2,4,5,7,9,11,12,14], #maj
-    [1,3,6,8,10, 13,15,18,20] #pent
-]
 
 DPINS = (pin8,pin12,pin13,pin14,pin15,pin16)
 PINS = (pin1,pin8,pin12,pin2,pin13,pin14,pin15,pin16)
@@ -43,16 +36,10 @@ def rdart():
             r += MASKS[i]
     return r
 
-def rdtone(multi=False):
+def rdtone():
     if not uart.any(): return None
     b = uart.read(1)
-    ##if b is None: return None
-    tm = b[0]
-    if not multi:
-        for mi in range(7,-1,-1):
-            if tm & MASKS[mi]:
-                return MASKS[mi]
-    return tm
+    return b[0]
 
 class MIDI():
     NOTE_ON = 0x90
@@ -70,17 +57,26 @@ class MIDI():
         self.c = c
         self.v = v
 
-    def note_on(self, note, velocity=None):
+    def notes_on(self, notes, velocity=None):
         if velocity is None: velocity = self.v
-        self.send(self.NOTE_ON | self.c, note, velocity)
+        if not isinstance(notes, list):
+            self.send(self.NOTE_ON | self.c, notes, velocity)
+        else:
+            for n in notes:
+                self.send(self.NOTE_ON | self.c, n, velocity)
 
-    def note_off(self, note, velocity=0x7F):
+    def notes_off(self, notes, velocity=0x7F):
         if velocity is None: velocity = self.v
-        self.send(self.NOTE_OFF | self.c, note, velocity)
+        if not isinstance(notes, list):
+            self.send(self.NOTE_OFF | self.c, notes, velocity)
+        else:
+            for n in notes:
+                self.send(self.NOTE_OFF | self.c, n, velocity)
 
+#TODO: deprecate, and use an on the fly 'notation ruler' for better range!
 def newnotes():
     global NOTES
-    NOTES = [n+ROOTS[rootidx]+OCTAVES[octave] for n in FINGERINGS[fingering]]
+    NOTES = [n+ROOTS[rootidx]+OCTAVES[octave] for n in range(9)]
 
 def reroot(i=None):
     global rootidx, NOTES
@@ -88,14 +84,6 @@ def reroot(i=None):
         rootidx = (rootidx+1) % len(ROOTS)
     else:
         rootidx = i
-    newnotes()
-
-def refinger(i=None):
-    global fingering
-    if i is None:
-        fingering = (fingering+1) % len(FINGERINGS)
-    else:
-        fingering = i
     newnotes()
 
 def reoctave(i=None):
@@ -117,22 +105,43 @@ HIGH=1<<2
 
 newnotes()
 
-def send(tm, am):
+def send(tm, am, chords=False):
     global playing, plucked
 
-    pluck = (am & PLUCK) != 0
-    if tm == 0: note = NOTES[0]
-    else: note = NOTES[1+MASKS.index(tm)] #tm=single
+    if not chords:
+        if tm == 0:
+            notes = NOTES[0]
+        else:
+            for mi in range(7, -1, -1):
+                if tm & MASKS[mi]:
+                    tm = MASKS[mi] # highest set
+                    break
 
+            notes = NOTES[1+MASKS.index(tm)]
+    else: #chord
+        if tm == 0:
+            notes = []
+        else:
+            for ri in range(8):
+                if tm & MASKS[ri]:
+                    break
+            ri += 1 #skip open string pos
+            try:
+                notes = [NOTES[ri]] # root
+                notes.append(NOTES[ri+4]) #3rd
+                notes.append(NOTES[ri+7]) #5th
+            except: pass
+
+    pluck = (am & PLUCK) != 0
     if pluck and not plucked: # just plucked
         if playing is not None:
-            midi.note_off(playing)
-        midi.note_on(note)
-        playing = note
+            midi.notes_off(playing)
+        midi.notes_on(notes)
+        playing = notes
 
     if playing is not None:
-        if note is None or note != playing:
-            midi.note_off(playing)
+        if notes is None or notes != playing:
+            midi.notes_off(playing)
             playing = None
 
     plucked = pluck
@@ -140,6 +149,7 @@ def send(tm, am):
 def play():
     pam = 0
     ptm = 0
+    chords = False
     display.show(ROOTT[rootidx])
     while True:
         if button_a.was_pressed():
@@ -147,10 +157,11 @@ def play():
             display.show(ROOTT[rootidx])
 
         if button_b.was_pressed():
-            refinger()
-            display.show(FINGERT[fingering])
-            sleep(500)
-            display.show(ROOTT[rootidx])
+            chords = not chords
+            if chords:
+                display.show('C')
+            else:
+                display.show("S")
 
         tm = rdtone()
         if tm is None: tm = ptm
@@ -164,7 +175,7 @@ def play():
             reoctave(2)
 
         if am != pam or tm != ptm:
-            send(tm, am)
+            send(tm, am, chords)
             pam = am
             ptm = tm
 
@@ -179,7 +190,8 @@ try:
 except Exception as e:
     display.show(Image.NO)
     uart.init(baudrate=115200)
-    print(e)
-    sleep(1000)
-finally:
-    reset()
+    raise e
+    #print(e)
+    #sleep(1000)
+#finally:
+    #reset()
