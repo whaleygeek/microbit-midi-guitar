@@ -31,7 +31,7 @@ def init():
         else:
             p.is_touched()
 
-def scan(multi=True):
+def rdart():
     r = 0
     for i in range(7,-1,-1):
         p = PINS[i]
@@ -41,23 +41,22 @@ def scan(multi=True):
             v = p.is_touched()
         if v:
             r += MASKS[i]
-            if not multi: break 
     return r
 
-rdart = lambda: scan(True)
-
-def rdtone():
-    tm = None
-    if uart.any():
-        b = uart.read(1)
-        if b is not None:
-            tm = b[0]
+def rdtone(multi=False):
+    if not uart.any(): return None
+    b = uart.read(1)
+    ##if b is None: return None
+    tm = b[0]
+    if not multi:
+        for mi in range(7,-1,-1):
+            if tm & MASKS[mi]:
+                return MASKS[mi]
     return tm
 
 class MIDI():
     NOTE_ON = 0x90
     NOTE_OFF = 0x80
-    CHAN_PROGRAM = 0xC0
 
     @staticmethod
     def send(b0, b1, b2=None):
@@ -67,26 +66,17 @@ class MIDI():
             m = bytes([b0, b1, b2])
         uart.write(m)
 
-    def __init__(self, channel=0, velocity=0x7F):
-        self.channel = channel
-        self.velocity = velocity
-
-    def set_instrument(self, instrument):
-        instrument -= 1
-        if instrument < 0 or instrument > 0x7F: return
-        self.send(self.CHAN_PROGRAM | self.channel, instrument)
+    def __init__(self, c=0, v=0x7F):
+        self.c = c
+        self.v = v
 
     def note_on(self, note, velocity=None):
-        if note < 0 or note > 0x7F: return
-        if velocity is None: velocity = self.velocity
-        if velocity < 0 or velocity > 0x7F: velocity = 0x7F
-        self.send(self.NOTE_ON | self.channel, note, velocity)
+        if velocity is None: velocity = self.v
+        self.send(self.NOTE_ON | self.c, note, velocity)
 
     def note_off(self, note, velocity=0x7F):
-        if note < 0 or note > 0x7F: return
-        if velocity is None: velocity = self.velocity
-        if velocity < 0 or velocity > 0x7F: velocity = 0x7F
-        self.send(self.NOTE_OFF | self.channel, note, velocity)
+        if velocity is None: velocity = self.v
+        self.send(self.NOTE_OFF | self.c, note, velocity)
 
 def newnotes():
     global NOTES
