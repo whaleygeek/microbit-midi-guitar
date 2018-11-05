@@ -26,7 +26,7 @@ def learn():
                         break
     return s
 
-def scan(multi=True):
+def rdtone():
     r = 0
     for i in range(7,-1,-1):
         if SCAN is None:
@@ -40,16 +40,14 @@ def scan(multi=True):
             v = p.is_touched()
         if v:
             r += MASKS[i]
-            if not multi: break 
     return r
 
 def play():
     ptm = 0
-    tone = lambda : scan(False)
     while True:
-        tm = tone()
+        tm = rdtone()
         if tm != 0:
-            display.show(str(1+MASKS.index(tm)))
+            display.show(Image.DIAMOND)
         else:
             display.show('-')
         if tm != ptm:
@@ -57,7 +55,6 @@ def play():
             ptm = tm
 
 try:
-    print("TONE")
     init()
     del init
     if button_a.is_pressed():

@@ -169,7 +169,6 @@ def play():
             ptm = tm
 
 try:
-    print("ART/MIDI")
     init()
     del init
     display.show(Image.HAPPY)
