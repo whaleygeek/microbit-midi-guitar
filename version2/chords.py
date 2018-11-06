@@ -16,6 +16,7 @@
 # Each tuple index is the position (1st, 2nd, 3rd, etc)
 # Each value is the number of semi-tones away from its root, of that position.
 
+# Notation ruler are note positions, 1-based (1=root)
 #    (0)    R 2 3 4 5 6 7  8  9  10 11 12 13 14 15
 NR = (None, 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24)
 
@@ -65,6 +66,7 @@ NR = (None, 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24)
 # on the back of the guitar neck.
 # mental  . . . . .   15
 
+# CHORDS table are semitone offsets, 0-based
 CHORDS = (
     (NR[1],),                                       # 0   root  . - - - -
     (NR[1], NR[5]),                                 # 1   5     . . - - -
