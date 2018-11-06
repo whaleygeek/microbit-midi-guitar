@@ -41,47 +41,49 @@ NR = (None, 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24)
 # chord table, the fingerings are stored in binary order so that the table
 # can use a computed index for a fast lookup.
 
-#NAME    FINGERING   binary  positions        pattern logic
+#NAME     FINGERING  BIN   POSITIONS       COMMENTS
+#           1 2 4 8  idx
 #-------------------------------------------------------------------------------
-# Root    . - - - -   0       1               just the root note plays
-# MAJ     . . . - -   12      1  3  5         first 3 cols look like 1,3,5
-# MAJ7    . . . . -   14      1  3  5  7      MAJ +7th
-# 7       . - - . -   2       1  3  5  b7     Root +7th
-# min     . - . - -   4       1  b3 5         MAJ with adjusted 3rd
-# min7    . - . . -   6       1  b3 5  b7     min +7th
-# min9    . - . - .   5       1  b3 5  b7 9   min +9th
-# 5       . . - - -   8       1     5         looks like a power chord on guitar
-# 5/9     . . - - .   9       1  5        9   looks like a power chord on guitar
-# 6       . - . . .   7       1  3  5  6      (no logic)
-# 9       . . . - .   13      1  3  5  b7 9   MAJ +9th
-# aug     . . - . -   10      1  3  #5        MAJ with 5th raised
-# sus4    . - - - .   1       1  4  5         (no logic)
-# 7sus4   . - - . .   3       1  4  5  b7     sus4 +7th
-# dim     . . - . .   11      1  b3 b5 bb7    (no logic) just hard to finger!
+# Root    . - - - -   0    1               just the root note plays
+# MAJ     . . . - -   3    1  3  5         first 3 cols look like 1,3,5
+# MAJ7    . . . . -   7    1  3  5  7      MAJ +7th
+# 7       . - - . -   4    1  3  5  b7     Root +7th
+# min     . - . - -   2    1  b3 5         MAJ with adjusted 3rd
+# min7    . - . . -   6    1  b3 5  b7     min +7th
+# min9    . - . - .   10   1  b3 5  b7 9   min +9th
+# 5       . . - - -   1    1     5         looks like a power chord on guitar
+# 5/9     . . - - .   9    1  5        9   looks like a power chord on guitar
+# 6       . - . . .   14   1  3  5  6      (no logic)
+# 9       . . . - .   11   1  3  5  b7 9   MAJ +9th
+# aug     . . - . -   5    1  3  #5        MAJ with 5th raised
+# sus4    . - - - .   8    1  4  5         (no logic)
+# 7sus4   . - - . .   12   1  4  5  b7     sus4 +7th
+# dim     . . - . .   13   1  b3 b5 bb7    (no logic) just hard to finger!
 #
 # And, for aliens with 5 fingers and a thumb, there is potentially a chord 15
 # which is impossible for humans to play, as the thumb forms the ground plane
 # on the back of the guitar neck.
 # mental  . . . . .   15
 
-
 CHORDS = (
-    (NR[1],),                                    # 0   root  . - - - -
-    (NR[1], NR[4],   NR[5]),                     # 1   sus4  . - - - .
-    (NR[1], NR[3],   NR[5],   NR[7]-1),          # 2   7     . - - . -
-    (NR[1], NR[4],   NR[5],   NR[7]-1),          # 3   7sus4 . - - . .
-    (NR[1], NR[3]-1, NR[5]),                     # 4   min   . - . - -
-    (NR[1], NR[3]-1, NR[5],   NR[7]-1,  NR[9]),  # 5   min9  . - . - .
-    (NR[1], NR[3]-1, NR[5],   NR[7]-1),          # 6   min7  . - . . -
-    (NR[1], NR[3],   NR[5],   NR[6]),            # 7   6     . - . . .
-    (NR[1],          NR[5]),                     # 8   5     . . - - -
-    (NR[1], NR[5],                      NR[9]),  # 9   5/9   . . - - .
-    (NR[1], NR[3],   NR[5]+1),                   # 10  aug   . . - . -
-    (NR[1], NR[3]-1, NR[5]-1, NR[7]-2),          # 11  dim   . . - . .
-    (NR[1], NR[3],   NR[5]),                     # 12  MAJ   . . . - -
-    (NR[1], NR[3],   NR[5],   NR[7]-1,  NR[9]),  # 13  9     . . . - .
-    (NR[1], NR[3],   NR[5],   NR[7]),            # 14  MAJ7  . . . . -
+    (NR[1],),                                       # 0   root  . - - - -
+    (NR[1], NR[5]),                                 # 1   5     . . - - -
+    (NR[1], NR[3]-1, NR[5]),                        # 2   min   . - . - -
+    (NR[1], NR[3],   NR[5]),                        # 3   MAJ   . . . - -
+    (NR[1], NR[3],   NR[5],    NR[7]- 1),           # 4   7     . - - . -
+    (NR[1], NR[3],   NR[5]+1),                      # 5   aug   . . - . -
+    (NR[1], NR[3]-1, NR[5],    NR[7]-1),            # 6   min7  . - . . -
+    (NR[1], NR[3],   NR[5],    NR[7]),              # 7   MAJ7  . . . . -
+    (NR[1], NR[4],   NR[5]),                        # 8   sus4  . - - - .
+    (NR[1], NR[5],                      NR[9]),     # 9   5/9   . . - - .
+    (NR[1], NR[3]-1, NR[5],    NR[7]-1, NR[9]),     # 10  min9  . - . - .
+    (NR[1], NR[3],   NR[5],    NR[7]-1, NR[9]),     # 11  9     . . . - .
+    (NR[1], NR[4],   NR[5],    NR[7]-1),            # 12  7sus4 . - - . .
+    (NR[1], NR[3]-1, NR[5]-1,  NR[7]-2),            # 13  dim   . . - . .
+    (NR[1], NR[3],   NR[5],    NR[6]),              # 14  6     . - . . .
+    (NR[1],)                                        # 15  Mental fingering
 )
+
 
 # This generates a tuple of tuples (immutable) with semitone offsets from root
 # of the specific note. It can be embedded inside a MicroPython code file
