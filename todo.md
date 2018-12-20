@@ -88,3 +88,6 @@ just melody note, just bass note, or both.
 * Look at using other pads on the articulation hand, to trigger
 an up-strum or a down-strum (of the selected chord in chord mode,
 or just major chord in single mode?)
+
+* palm-mute feature, if present when plucking, create a muted sound.
+If added after pluck touch, mute at that point.
